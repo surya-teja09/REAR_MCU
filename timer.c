@@ -9,11 +9,14 @@ extern int distance_covered(void);
 extern int speed(void);
 extern void config_pins(void);
 extern int read_temp(void);
+extern void latch_status(void);
 
 extern int s1,s2,s3,s4;
 extern  unsigned long int RpmCnt;
  
 TIM_HandleTypeDef htim3;
+
+uint8_t msec = 0, sec = 0;
 
 
 
@@ -58,6 +61,7 @@ void TIM3_IRQHandler(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	msec++;
 	HAL_NVIC_DisableIRQ(TIM3_IRQn);
 	if (htim-> Instance == TIM3)
 	{
@@ -68,7 +72,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		RpmCnt=0;
 		distance_covered();
 		read_temp();
+		latch_status();
 		CAN_TxMsg();
 		HAL_NVIC_EnableIRQ(TIM3_IRQn);
+	}
+	if(msec == 4)
+	{
+		sec++;
+		msec = 0;
 	}
 }

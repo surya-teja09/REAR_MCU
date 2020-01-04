@@ -10,6 +10,7 @@ int speed(void);
 uint32_t pclk1;
 void CAN1_Init(void);
 void SPI_Init(void);
+extern void latch_status(void);
 
 void CAN_Filter_Config(void);
 
@@ -22,7 +23,8 @@ GPIO_InitTypeDef PinConfig;
 extern TIM_HandleTypeDef htim3;
 
 int s1,s2,s3,s4;
-uint8_t msg[5];
+extern uint8_t l1;
+uint8_t msg[6];
 unsigned long int RpmCnt;
 int kmph;
 double odo;
@@ -89,6 +91,9 @@ void config_pins(void)
 	HAL_NVIC_SetPriority(EXTI3_IRQn,0,1);   
 	HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 	
+	HAL_NVIC_SetPriority(EXTI15_10_IRQn,0,1);   
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+	
 	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()); 
 	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 	HAL_NVIC_SetPriority(SysTick_IRQn,0,0);
@@ -110,7 +115,21 @@ void config_pins(void)
 	PinConfig.Pin = GPIO_PIN_10;      
 	PinConfig.Mode = GPIO_MODE_OUTPUT_PP; 
 	HAL_GPIO_Init(GPIOB,&PinConfig);
-
+	
+	
+	PinConfig.Pin = GPIO_PIN_12 ;      
+	PinConfig.Mode = GPIO_MODE_INPUT;
+	PinConfig.Speed = GPIO_SPEED_FAST;
+	PinConfig.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA,&PinConfig);
+	
+	PinConfig.Pin =  GPIO_PIN_11;      
+	PinConfig.Mode = GPIO_MODE_OUTPUT_PP;
+	PinConfig.Speed = GPIO_SPEED_FAST;
+	PinConfig.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA,&PinConfig);
+	
+	
 }
 
 /*CallBack function for gpio status*/
@@ -145,6 +164,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		s4 = HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_3);
 	}
 	
+	else if(GPIO_Pin == GPIO_PIN_12)
+	{
+		
+		if(latch_status() == 1)
+			{
+				HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET);
+			}
+		}
+	CAN_TxMsg();
+	}
 	else
 		__NOP();	
 	#endif
@@ -220,6 +249,11 @@ void EXTI9_5_IRQHandler(void)
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
 }
 
+
+void EXTI15_10_IRQHandler(void)
+{
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+}
 
 /*for gear mode*/
 

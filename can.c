@@ -3,12 +3,12 @@
 #include "stm32f4xx_hal_gpio.h"
 
 extern void CAN1_Init(void);
-
 extern void CAN_Filter_Config(void);
-
 void CAN_TxMsg(void);
+extern void latch_status(void);
 
-extern uint8_t msg[5];
+extern uint8_t msg[6];
+extern uint8_t l1;
 
 extern CAN_HandleTypeDef hcan1;
 CAN_TxHeaderTypeDef TxHeader; // trasmission header typedef
@@ -90,7 +90,7 @@ void CAN_TxMsg(void)
 {
 	uint32_t TxMailbox; //transmision mailbox
 	
-	TxHeader.DLC = 5;       //data code length 
+	TxHeader.DLC = 6;       //data code length 
 	TxHeader.ExtId = 0x5DC; //CAN frame identifier
 	TxHeader.IDE = CAN_ID_EXT; //Extended CAN
 	TxHeader.RTR = CAN_RTR_DATA; //remote transmission request  i.e., configuring to data
@@ -103,7 +103,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
   uint8_t rcvd_msg[5];
   
-  HAL_CAN_GetRxMessage(&hcan1,CAN_RX_FIFO0,&RxHeader,rcvd_msg);  //HAL function to receieve data from outside
+  HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, rcvd_msg);  //HAL function to receieve data from outside
+
+	if(RxHeader.ExtId == 0x3ED && RxHeader.RTR == 1)
+	{
+		if (rcvd_msg[0] == 1)
+		{
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET);
+		}
+	}
 }
 
 /*CAN transmit IRQ Handler*/

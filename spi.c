@@ -11,7 +11,7 @@ extern void SPI_Init(void);
 uint8_t data[2];
 uint16_t temp,temp1;
 float cel;
-extern uint8_t msg[5];
+extern uint8_t msg[6];
 
 void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi1)
 {
@@ -68,7 +68,7 @@ int read_temp(void)
 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_10,GPIO_PIN_SET);
 	temp = (data[0] << 8)|(data[1]);
 	if (temp & 0x4)
-		while(1); 
+		while(1);
 	temp1 =(temp >> 3);
 	cel  = (temp*0.25);
 	cel = cel/10;
